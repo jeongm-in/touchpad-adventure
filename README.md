@@ -37,3 +37,20 @@ So now I have the touchpad module, I know which pins I need to connect to, and I
 The touchpad module did come with a cable that connects to the motherboard. I thought about purchasing [a female breakout board](https://oshpark.com/shared_projects/MjMFKhqM), but the cable was a bit to bulky and would have restricted the final housing a lot. So I decided to ditch the cable it came with, and ordered a [51 pin ZIF breakout board from AliExpress](https://www.aliexpress.us/item/2251832656865723.html). Now it says it will take 2 weeks to arrive, but who knows when I would get it in mail. Once I get the part in mail (I'm thinking next year), I will need to solder the pins and cables. Yay... 
 
 All I can do now is just waiting, and maybe doing some research on the software side of things. 
+
+
+## 2023/12/18
+
+Parts have arrived.
+
+![parts](images/02_zif_and_breakout.JPG)
+- 2 breakout boards for all 51 pins 
+- 2 60mm ZIF cables (a little bent, but should be fine)
+
+![pieces](images/03_all_connected.JPG)
+![pieces](images/04_breakout_and_elite.JPG)
+
+I connected the board and the breakout board together. I'm not really sure how I am supposed to cram all of these into a compact package. 
+Once I have the Elite C code set up and confirm the assembly is working, maybe I could design a smaller PCB with just the few pins I need for the touchpad. In the mean time, breadboard would be good enough for testing purposes. 
+
+Will come back after I solder some pins on both the board and Elite C. 
