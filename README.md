@@ -31,7 +31,7 @@ For the I2C though, I need 4 connections: SCL (Clock), SDA (Data), Power Supply 
 | 49 | 25 | GND |  | 
 | 48 | 27 | FPR_LED_COM | 5V, Fingerprint LED |
 
-Since Arya used rpi2040, I was hoping to finally find some use for my [Raspberry Pi Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/) which I bought for no reason, but alas Raspberry Pi Pico only supports 3.3V. Fortunately though, I had a couple [Elite C](https://deskthority.net/wiki/Arduino_Pro_Micro) microcontrollers that do have 5V and all the I2C pins. 
+Since Arya used rpi2040, I was hoping to finally find some use for my [Raspberry Pi Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/) which I bought for no reason, but alas Raspberry Pi Pico only supports 3.3V. Fortunately though, I had a couple [Elite C](https://deskthority.net/wiki/Elite-C) microcontrollers that do have 5V and all the I2C pins. 
 
 So now I have the touchpad module, I know which pins I need to connect to, and I know which pins on the microcontroller I need to connect my pins to. I have no cluew hat kind of code I would need to get the trackpad signal to cursor movement though. 
 The touchpad module did come with a cable that connects to the motherboard. I thought about purchasing [a female breakout board](https://oshpark.com/shared_projects/MjMFKhqM), but the cable was a bit to bulky and would have restricted the final housing a lot. So I decided to ditch the cable it came with, and ordered a [51 pin ZIF breakout board from AliExpress](https://www.aliexpress.us/item/2251832656865723.html). Now it says it will take 2 weeks to arrive, but who knows when I would get it in mail. Once I get the part in mail (I'm thinking next year), I will need to solder the pins and cables. Yay... 
@@ -47,10 +47,21 @@ Parts have arrived.
 - 2 breakout boards for all 51 pins 
 - 2 60mm ZIF cables (a little bent, but should be fine)
 
-![pieces](images/03_all_connected.JPG)
-![pieces](images/04_breakout_and_elite.JPG)
+![pieces1](images/03_all_connected.JPG)
+![pieces2](images/04_breakout_and_elite.JPG)
 
 I connected the board and the breakout board together. I'm not really sure how I am supposed to cram all of these into a compact package. 
 Once I have the Elite C code set up and confirm the assembly is working, maybe I could design a smaller PCB with just the few pins I need for the touchpad. In the mean time, breadboard would be good enough for testing purposes. 
 
 Will come back after I solder some pins on both the board and Elite C. 
+
+## 2023/12/20
+Soldered the parts. Pardon the sloppy solder job!
+
+![soldered](images/05_soldered_dev.jpg)
+
+On a hindsight, I should have soldered the pins on the opposite side for the ZIF breakout board. Good thing I have extra. 
+
+While all four pins "should" be connected correctly, my computer was unable to recognize Elite C when I plugged it via USB cable. Nothing showed up under PORT for any of the IDEs I tried! I think I'm missing some driver because QMK Toolbox could recognize Elite C just fine.
+
+Need to figure out a way to work with ATMega32U4 next. Also my head hurts from all the soldering fume I inhaled earlier. 
