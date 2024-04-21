@@ -368,3 +368,5 @@ I would need to read more on the spec, but it looks like these values are the HI
 00 00 01 01 00 d4 01 d9 00 01 01 54 03 30 01 01 
 00 00 01 01 00 d4 01 d9 00 01 01 54 03 30 01 01
 ```
+
+Apparently something is not right with how I'm printing the bytes. Should tweak the code until I get the right HID descriptor out.
