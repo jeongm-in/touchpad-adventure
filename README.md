@@ -197,3 +197,174 @@ f0: c1 02 00 00 00 00 4d 01 00 00 00 00 00 01 00 06    ??....M?.....?.?
 ```
 
 I noticed some changes in the values within the dump, but honestly I'm not sure how to proceed further. I did order the framework input cover thing mentioned earlier, so I will try and see if that leads me anywhere. At this point my only option seems to be  reverse engineering the thing. 
+
+
+# 3/1/2024
+Brought the set up to 2600 meet up, and got some help on how to dump things out of the register and format so that it prints out pretty. But we couldn't quite figure out how to get actual data read out from either of the registers. 
+
+Still stuck?  
+
+# 4/20/2024
+Was scrolling hackaday and found an article titled [Human-Interfacing devices: HID over I2C](https://hackaday.com/2024/04/17/human-interfacing-devices-hid-over-i2c/). From 3 days ago. Clicked on it, and it's written by no one other than Arya, and contained whole lot of information on how to work with HID over I2C device. It turns out, I got the device ID 0x2c correct. All I had to do was read blocks out of the register 0x20 on this device on 0x2c. This was not possible through Raspberry Pi 3 I was using, as block read is not supported.
+
+```
+$ i2cdetect -F 1
+Functionalities implemented by /dev/i2c-1:
+I2C                              yes
+SMBus Quick Command              yes
+SMBus Send Byte                  yes
+SMBus Receive Byte               yes
+SMBus Write Byte                 yes
+SMBus Read Byte                  yes
+SMBus Write Word                 yes
+SMBus Read Word                  yes
+SMBus Process Call               yes
+SMBus Block Write                yes
+SMBus Block Read                 no
+SMBus Block Process Call         no
+SMBus PEC                        yes
+I2C Block Write                  yes
+I2C Block Read                   yes
+```
+
+Arya was using Circuit Python in the article, so I brought out Raspberry Pi Pico and installed Circuit Python. Only catch was that Pi Pico is 3.3V only, so I figured I could power the touchpad using the 5V pins from Raspberry Pi 3. 
+
+However, when I loaded i2c, Circuit Python complained about missing pull up resistors.
+
+```
+import block
+i2c = block.I2C() # This has to be something else, but forgot to write it down. 
+```
+
+That meant I had to use the power from the Raspberry Pi Pico, and then connect SDA/SCL with the power using resistors. Would touchpad work with 3.3V though? 
+
+So I just pulled out the Elite C and wired out the breakout board, and ran the old script I had, which read a byte from 0x20 on I2c device 0x2c which always returns 37. 
+
+Then it occurred to me, what if I read the entire block from 0x20 like Arya was doing? So I modified the script a little, and I actually was able to read meaningful data out of the touchpad.  
+
+```
+#include <Wire.h>  
+
+#define ADDR 0x2C
+
+void setup() {
+  Wire.begin();  
+  Serial.begin(115200);
+  Serial.print("init");
+}
+
+
+void loop() {
+
+  Wire.requestFrom(ADDR, 16);
+  while(Wire.available()){
+    char strBuf[4];
+    byte c = Wire.read();
+    sprintf(strBuf, "%02x", c);
+    Serial.print(strBuf);
+    Serial.print(" ");
+  }
+
+  Serial.print("\n");
+  
+  delay(1000); 
+}
+```
+
+Some sample output
+```
+25 00 01 03 00 23 02 b4 01 00 00 00 00 00 00 00 
+25 00 01 03 00 24 02 b4 01 00 00 00 00 00 00 00 
+25 00 01 03 00 28 02 b4 01 03 01 48 03 dd 01 00 
+25 00 01 03 00 2e 02 b4 01 03 01 49 03 dc 01 00 
+25 00 01 03 00 35 02 b5 01 03 01 4c 03 dc 01 00 
+25 00 01 03 00 fd 01 a7 01 03 01 07 03 dd 01 00 
+25 00 01 03 00 47 02 8a 01 03 01 42 03 ec 01 00 
+25 00 01 03 00 63 02 99 01 03 01 51 03 09 02 00 
+25 00 01 03 00 1c 02 a8 01 03 01 0a 03 12 02 00 
+25 00 01 03 00 e4 01 e7 01 03 01 0e 03 4d 02 00 
+25 00 01 03 00 b4 01 0c 02 03 01 2b 03 5b 02 03 
+00 00 01 01 00 f3 02 27 01 00 00 00 00 00 00 00 
+00 00 01 01 00 f3 02 27 01 00 00 00 00 00 00 00 
+00 00 01 01 00 f3 02 27 01 00 00 00 00 00 00 00 
+00 00 01 01 00 f3 02 27 01 00 00 00 00 00 00 00 
+00 00 01 01 00 f3 02 27 01 00 00 00 00 00 00 00 
+00 00 01 01 00 f3 02 27 01 00 00 00 00 00 00 00 
+```
+
+Obviously, `00 00 01 01 00 f3 02 27 01 00 00 00 00 00 00 00` is the "idle" state.
+
+I would need to read more on the spec, but it looks like these values are the HID descriptor, so I should be able to further decode what this byte soup means. Regardless, a huge progress. 
+
+
+## Single finger
+```
+25 00 01 03 00 a1 01 95 01 03 01 bb 02 e5 01 03 
+25 00 01 03 00 a5 01 8d 01 03 01 f1 02 ba 01 03 
+25 00 01 03 00 de 01 63 01 03 01 31 03 93 01 03 
+25 00 01 01 00 de 01 63 01 01 01 31 03 93 01 01 
+00 00 01 01 00 de 01 63 01 01 01 31 03 93 01 01 
+00 00 01 01 00 de 01 63 01 01 01 31 03 93 01 01 
+25 00 01 03 00 a3 02 92 00 00 00 00 00 00 00 00 
+25 00 01 03 00 a3 02 92 00 00 00 00 00 00 00 00 
+25 00 01 03 00 a3 02 92 00 00 00 00 00 00 00 00 
+25 00 01 03 00 a3 02 92 00 00 00 00 00 00 00 00 
+25 00 01 03 00 a3 02 a4 00 00 00 00 00 00 00 00 
+25 00 01 03 00 a9 02 3f 01 00 00 00 00 00 00 00 
+25 00 01 03 00 b5 02 f8 01 00 00 00 00 00 00 00 
+25 00 01 01 00 b5 02 f8 01 00 00 00 00 00 00 00 
+25 00 01 03 01 ea 02 0d 00 00 00 00 00 00 00 00 
+25 00 01 03 01 0e 03 12 01 00 00 00 00 00 00 00 
+25 00 01 01 01 0e 03 12 01 00 00 00 00 00 00 00 
+25 00 01 03 00 43 03 e6 00 00 00 00 00 00 00 00 
+25 00 01 01 00 43 03 e6 00 00 00 00 00 00 00 00 
+25 00 01 03 01 e2 03 01 00 00 00 00 00 00 00 00 
+25 00 01 03 01 e1 03 f0 00 00 00 00 00 00 00 00 
+25 00 01 01 01 e1 03 f0 00 00 00 00 00 00 00 00 
+25 00 01 03 00 84 03 2c 00 00 00 00 00 00 00 00
+```
+
+## Two fingers
+```
+00 00 01 01 00 7f 03 9c 01 00 00 00 00 00 00 00 
+00 00 01 01 00 7f 03 9c 01 00 00 00 00 00 00 00 
+25 00 01 03 00 51 02 4d 00 00 00 00 00 00 00 00 
+25 00 01 03 00 51 02 4d 00 00 00 00 00 00 00 00 
+25 00 01 03 00 51 02 4d 00 00 00 00 00 00 00 00 
+25 00 01 03 00 51 02 4d 00 03 01 71 03 94 00 00 
+25 00 01 03 00 67 02 a0 00 03 01 87 03 e9 00 00 
+25 00 01 01 00 67 02 a0 00 01 01 87 03 e9 00 00 
+25 00 01 03 02 3b 02 10 00 03 03 c1 03 39 00 00 
+25 00 01 03 02 69 02 fd 00 03 03 d1 03 3b 01 00 
+25 00 01 01 02 69 02 fd 00 01 03 d1 03 3b 01 00 
+25 00 01 03 00 1d 02 6f 02 03 01 46 03 cd 02 00 
+25 00 01 03 00 35 02 e9 01 03 01 70 03 3a 02 00 
+25 00 01 03 00 22 02 42 01 01 01 70 03 3a 02 00 
+25 00 01 01 00 22 02 42 01 00 00 00 00 00 00 00 
+25 00 01 03 00 00 02 ae 00 03 01 70 03 dd 00 00 
+25 00 01 03 00 00 02 af 00 03 01 70 03 de 00 00 
+```
+
+## Three fingers 
+```
+00 00 01 01 00 03 02 b7 00 01 01 71 03 e5 00 00 
+00 00 01 01 00 03 02 b7 00 01 01 71 03 e5 00 00 
+25 00 01 03 00 c0 02 0a 00 03 01 9a 01 76 00 00 
+25 00 01 03 00 c0 02 0a 00 03 01 9a 01 76 00 03 
+25 00 01 03 00 c0 02 0a 00 03 01 9a 01 76 00 03 
+25 00 01 03 00 c0 02 0a 00 03 01 9a 01 76 00 03 
+25 00 01 01 00 c0 02 0a 00 01 01 9a 01 76 00 01 
+25 00 01 03 00 cf 00 99 00 00 00 00 00 00 00 00 
+25 00 01 03 00 cf 00 99 00 00 00 00 00 00 00 00 
+25 00 01 03 00 cf 00 99 00 03 01 e8 01 0a 00 00 
+25 00 01 03 00 cf 00 99 00 03 01 e8 01 0a 00 00 
+25 00 01 01 00 cf 00 99 00 01 01 e8 01 0a 00 00 
+25 00 01 03 00 d4 01 d9 00 00 00 00 00 00 00 00 
+25 00 01 03 00 d4 01 d9 00 03 01 54 03 30 01 03 
+25 00 01 03 00 d4 01 d9 00 03 01 54 03 30 01 03 
+25 00 01 03 00 d4 01 d9 00 03 01 54 03 30 01 03 
+25 00 01 01 00 d4 01 d9 00 01 01 54 03 30 01 01 
+00 00 01 01 00 d4 01 d9 00 01 01 54 03 30 01 01 
+00 00 01 01 00 d4 01 d9 00 01 01 54 03 30 01 01 
+00 00 01 01 00 d4 01 d9 00 01 01 54 03 30 01 01
+```
