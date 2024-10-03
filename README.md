@@ -370,3 +370,14 @@ I would need to read more on the spec, but it looks like these values are the HI
 ```
 
 Apparently something is not right with how I'm printing the bytes. Should tweak the code until I get the right HID descriptor out.
+
+
+# 10/2/2024 
+
+| Name | FT 260 | Dev board | Touchpad | 
+|---|---|---|---|
+| SCL | DIO5 | IO0 | 34 | 
+| SDA | DIO6 | IO1 | 36 |
+| INT | DIO8 | IO3 | 35 |
+| 5V | - | - | 40 | 
+| GND | - | - | 33 |
