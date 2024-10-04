@@ -371,8 +371,9 @@ I would need to read more on the spec, but it looks like these values are the HI
 
 Apparently something is not right with how I'm printing the bytes. Should tweak the code until I get the right HID descriptor out.
 
-
-# 10/2/2024 
+# Sometime in September
+Learned about something called FT260 mentioned in [Framework Forum](https://community.frame.work/t/touchpad-with-2-buttons-instead-of-clickpad/36343/18), and ordered [UMFT260EV1A](https://ftdichip.com/products/umft260ev1a/)
+Connected it up but wasn't able to do much with it. Honestly not sure how this comes into the picture. Would need more research 
 
 | Name | FT 260 | Dev board | Touchpad | 
 |---|---|---|---|
@@ -381,3 +382,17 @@ Apparently something is not right with how I'm printing the bytes. Should tweak 
 | INT | DIO8 | IO3 | 35 |
 | 5V | - | - | 40 | 
 | GND | - | - | 33 |
+
+# 10/2/2024 
+
+Been using Micropython on the Raspberry Pi Pico to do the I2C over HID circus. 
+
+Few things I learned in the past few days:
+* Touchpad alone can run on 3v3.
+* Micropython 1.23 now has USB device support which could be used for this (as was mentioned in Arya's article)
+* I have been able to read "something" out of the touchpad before. I'm still getting the same data, but I was not reading the full data.
+  * 25 in the beginning meant 0x25 = 37, so I should have been reading 37 bytes.
+* The data extracted from I2C has some kind of pattern. Not sure what the details are, need more probing
+* data from I2C is probably not the HID Descriptor that could be readily used; this data has to be translated into Mouse HID Descriptor again and then sent to the host
+
+![table](images/06_data_from_i2c.jpg)
