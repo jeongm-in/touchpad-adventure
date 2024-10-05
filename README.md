@@ -383,7 +383,7 @@ Connected it up but wasn't able to do much with it. Honestly not sure how this c
 | 5V | - | - | 40 | 
 | GND | - | - | 33 |
 
-# 10/2/2024 
+# 10/3/2024 
 
 Been using Micropython on the Raspberry Pi Pico to do the I2C over HID circus. 
 
@@ -396,3 +396,72 @@ Few things I learned in the past few days:
 * data from I2C is probably not the HID Descriptor that could be readily used; this data has to be translated into Mouse HID Descriptor again and then sent to the host
 
 ![table](images/06_data_from_i2c.jpg)
+
+
+# 10/4/2024 
+
+Some more observations. Each output from I2C is something like this: 
+
+```
+03 00 3b 00 15 00 03 01 f3 04 37 00 03 02 5d 00 30 03 03 03 de 04 1b 03 00 00 00 00 00 00 04 00 21 27
+```
+
+First Finger reported `3b 00 15 00`. In these 4 bytes, first two correspond to the X coordinate and the latter two correspond to the Y coordinate. 
+That explains why each fingers have 2+4 bytes repeated.
+
+So I think these 2+4 bytes mean something like this: 
+
+| ??? | finger index (0 based)| X First Byte | X Second Byte | Y First Byte | Y Second Byte| 
+|---|---|---|---|---|---|
+|03 | 01 | f3 | 04 | 37 | 00 |
+
+
+```python
+# Scan for connected I2C devices  
+import machine
+
+
+SDA_PIN = machine.Pin(4)
+SCL_PIN = machine.Pin(5)
+i2c = machine.I2C(0, sda=SDA_PIN, scl=SCL_PIN, freq=500000)
+
+
+TOUCHPAD_ADDR = 0x2c
+REPORT_ID = 0x01 
+
+def helper_function(abc):
+    return ([abc[i:i+2] for i in range(0, len(abc), 2)])
+
+def helper_function_to_int(myList):
+    k = [int(x, 16) for x in myList]
+    v = ["{:03d}".format(x) for x in k]
+    return  [str(x) for x in v]
+
+def runner():
+    while True:
+        try:
+            l = i2c.readfrom(TOUCHPAD_ADDR, 1)[0]
+            if l:
+                d = i2c.readfrom(TOUCHPAD_ADDR, l)
+                if d[2] != REPORT_ID:
+                    print("WARNING")
+                    print(l, d)
+                else:
+                    d = d[3:]
+                    formatted = helper_function(d.hex())
+                    output = helper_function_to_int(formatted)
+                    print(" ".join(output))
+                    
+        except OSError:
+            print("Nothing burger")
+            
+        
+
+
+runner()
+```
+
+I'm using above code to print out the data to the console. In hopes of plotting out the data, I'm formatting the byte data to 3 digit int. 
+I attempted plotting the X Y coordinates (using the formula `=A + 255*B`) and got a nice line out of it.
+
+This still feels like raw data though. This chip is supposed to give HID over I2C, so I don't think I should be getting the raw finger coordinate data. Shouldn't this chip interpret all these finger movements and return some HID descriptor instead? 
