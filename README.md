@@ -415,6 +415,7 @@ So I think these 2+4 bytes mean something like this:
 |---|---|---|---|---|---|
 |03 | 01 | f3 | 04 | 37 | 00 |
 
+These kind of align with what is said in PCT1336QN's manual, though that one has way too many more registors than what I'm currently reading out of PCT3854QR. 
 
 ```python
 # Scan for connected I2C devices  
@@ -465,3 +466,36 @@ I'm using above code to print out the data to the console. In hopes of plotting 
 I attempted plotting the X Y coordinates (using the formula `=A + 255*B`) and got a nice line out of it.
 
 This still feels like raw data though. This chip is supposed to give HID over I2C, so I don't think I should be getting the raw finger coordinate data. Shouldn't this chip interpret all these finger movements and return some HID descriptor instead? 
+
+
+# 10/8/2024
+
+While I have some mystery values in each row, I at least have the coordinates for the 5 fingers. Still cannot quite figure out why I'm not reading the HID descriptor directly from the HID, but I'm going to try using this raw data to move mouse cursor around. 
+
+From rough calculations, the X dimension ranges from `0 to 0x0539 = 256*5+57 = 1337` and Y dimension ranges from 0 to `0x36C = 256*3 + 108 = 876`
+
+```
+001 000 **057 005** 046 003
+003 000 231 004 **108 003**
+```
+
+These values actually match the values in Arya's descriptor ([HID_USAGE_DESKTOP_X LOGICAL MAX = 1337](https://github.com/0xAryaCAFE/spicy-micropython/blob/3810a95b423668ce8a7be2f6eb615eec5d33fedd/ports/rp2/tusb_port.c#L142) and [HID_USAGE_DESKTOP_Y LOGICAL MAX = 876](https://github.com/0xAryaCAFE/spicy-micropython/blob/3810a95b423668ce8a7be2f6eb615eec5d33fedd/ports/rp2/tusb_port.c#L146))
+
+I can also dump the descriptor from my framework laptop and compare it with the data I am reading from I2C as well. 
+
+As of now, the first byte which has values 0x00 to 0x03 seem to be related to palm rejection or some sort of indication whether this is a legitimate touch or accidental. 
+
+When I have one point contact, I see the byte has value 0x03. When I smear my fingers around, I can see the value fluctuating. 
+
+| palm rejection (??) | finger index (0 based)| X First Byte | X Second Byte | Y First Byte | Y Second Byte| 
+|---|---|---|---|---|---|
+|03 | 01 | f3 | 04 | 37 | 00 |
+
+As for the last 4 bytes, I realized the last byte is some kind of ID that increments by 1 every time I read a row. It loops from 0x00 to 0xff, and when the device starts, it initiates from 0. 
+
+![last_byte](images/07_last_byte.png)
+
+| number of fingers | ??? but always 0x00 | ??? | ID % 255 |
+| --- | --- | --- | --- |
+|05 | 00 | e2 | d5 |
+
