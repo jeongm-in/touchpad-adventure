@@ -499,3 +499,27 @@ As for the last 4 bytes, I realized the last byte is some kind of ID that increm
 | --- | --- | --- | --- |
 |05 | 00 | e2 | d5 |
 
+
+# 10/11/2024
+
+How would interrupt work for this device? Does it mean there is a signal coming out of it when interrupt is sent? 
+So can I just hook it up to a GPIO and listen to it?
+
+Some things to consider... but can definitely wait after translating finger signal to descriptor is done 
+
+
+mystery penultimate byte also ranges from 0 to 255, so it does use all the values. 
+
+
+Some kind of bit operation to quickly process touch registers & extract coordinates? 
+
+C or python?
+
+
+Resources: 
+- [framework embedded controller i2c_hid.h (from chromebook)](https://github.com/FrameworkComputer/EmbeddedController/blob/hx20-hx30/include/i2c_hid.h)
+- [framework embedded controller i2c_hid_touchpad.h (from  chromebook)](https://github.com/FrameworkComputer/EmbeddedController/blob/hx20-hx30/include/i2c_hid_touchpad.h)
+- [framework embedded controller i2c_hid_touchpad.c (from  chromebook)](https://github.com/FrameworkComputer/EmbeddedController/blob/hx20-hx30/common/i2c_hid_touchpad.c)
+- [synaptics touchpad driver - SPI to HID](https://github.com/delingren/synaptics_touchpad/blob/main/touchpad.ino#L368)
+- [nrf52-i2c-hid demo (Adafruit feather)](https://github.com/NordicPlayground/nrf52-i2c-hid-demo/blob/master/nrf52-i2c-hid-demo/main.c)
+- [micropython USB hid-device-mouse example](https://github.com/micropython/micropython-lib/blob/master/micropython/usb/usb-device-mouse/usb/device/mouse.py)
