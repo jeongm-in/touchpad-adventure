@@ -612,6 +612,8 @@ line 33 (0x21) had something that awfully resembles HID Descriptor. And indeed, 
 
 Full descriptor below: 
 
+
+
 ```
 0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
 0x09, 0x02,        // Usage (Mouse)
@@ -936,6 +938,7 @@ Full descriptor below:
 
 // 687 bytes
 
+
 ```
 
 
@@ -955,7 +958,7 @@ Time to go get the reports back again...
 
 
 1 finger 
-
+```
 03 01 69 02 9d 00
 00000011 00000001 01101001 00000010 10011101 00000000 
 
@@ -973,9 +976,10 @@ Time to go get the reports back again...
 
 01 00 b9 7a
 00000001 00000000 10111001 01111010
-
+```
 
 3 finger 
+```
 03 00 60 02 fe 00 
 00000011 00000000 01100000 00000010 11111110 00000000 
 
@@ -993,10 +997,10 @@ Time to go get the reports back again...
 
 03 00 b5 91
 00000011 00000000 10110101 10010001
-
+```
 
 5 finger 
-
+```
 03 00 92 03 a7 00
 00000011 00000000 10010010 00000011 10100111 00000000
 
@@ -1014,7 +1018,59 @@ Time to go get the reports back again...
 
 05 00 f3 7f
 00000101 00000000 11110011 01111111
-
+```
 Total 272 bits = 34 bytes 
 
 Now to break this down using the descriptor... 
+
+
+
+
+
+# 10/19/2024
+
+
+
+Found some more interesting information. Microsoft has this [Required I2C HID Descriptor](https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/touchpad-required-hid-descriptors) table available, and I found the exact report in the touchpad output. 
+
+
+In register 32:
+
+
+| | wHIDDescLength | bcdVersion| wReportDescLength | wReportDescRegister | wInputRegister | wMaxInputLength | wOutputRegister | wMaxOutputLength | wCommandRegister| wDataRegister | wVendorID| wDeviceID | wVersionID |
+|--- | ---            | ---       | ---               | ---                 | ---            | ---             | ---              | ---             | ---      | ---       | ---        | ----  | ----  |
+| index | 00 01          | 02 03     | 04 05             | 06 07               | 08 09          | 10 11           | 12 13            | 14 15           | 16 17    | 18 19     | 20 21      | 22 23 | 24 25 |
+| value | 1e 00          | 00 01     | af 02             | 21 00               | 24 00          | 25 00           | 25 00            | 00 00           | 22 00    | 23 00     | 3a 09      | 74 02 | 04 07 |
+
+
+| Member | Size in Bytes | Description | value in hex | value in dec or decoded |
+| ---- | ---- | ---- | ---- | ---- |
+| wHIDDescLength | 2 | The length of the complete HID descriptor (in Bytes) |  `1e 00` = `0x001e` | 30 |
+| bcdVersion | 2 | The version number, in binary coded decimal format | `00 01` = `0x0100` | 4 |
+| wReportDescLength | 2 | The length of the Report descriptor (in Bytes) | `af 02` = `0x02af` | 687 |
+| wReportDescRegister | 2 | The register index containing the report descriptor | `21 00` = `0x21` | 33 |
+| wInputRegister | 2 | The register number to read the input report | `24 00` = `0x24` | 36 | 
+| wMaxInputLength | 2 | The length of the largest input report to be read from the input register | `25 00` = `0x25` | 37 |
+| wOutputRegister | 2 | The register number to send the output | `25 00` = `0x25` | 37 |
+| wMaxOutputLength | 2 | The length of the largest output report to be sent | `00 00` = `0x00` | 0 |
+| wCommandRegister | 2 | The register number to send command requests | `22 00` = `0x22` | 34 |
+| wDataRegister | 2 | The register number to exchange data with command requests | `23 00` = `0x23` | 35 | 
+| wVendorID | 2 | USB-IF assigned Vendor ID | `3a 09` = `0x093a` | 2362 |
+| wDeviceID | 2 | Device ID | `74 02` = `0x0274` | 628 | 
+| wVersionID | 2 | Firmware version number | `04 07` = `0x0704` | 1796 | 
+
+Pure luck I found the descriptor, but it was indeed in `0x21` and the total length of the descriptor is in fact 687 bytes.
+
+It says the input report should be read from register `0x24`, and the length of the largest input report to be read from the input register is 0x25 = 37
+
+And from USB-IF Vendor ID look ups, PixArt's ID is indeed `093A`. Device ID did not show up under their product list though. 
+
+
+Data from register `0x24`:
+```
+00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36
+00 00 01 01 00 d9 00 5b 03 01 02 3f 02 37 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 3e 64
+00 00 01 03 00 08 02 56 01 03 01 04 01 e7 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 13 64 
+00 00 01 03 00 08 02 56 01 03 01 04 01 e7 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 13 64
+```
+Somewhat static? 
