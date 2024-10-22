@@ -1074,3 +1074,118 @@ Data from register `0x24`:
 00 00 01 03 00 08 02 56 01 03 01 04 01 e7 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 13 64
 ```
 Somewhat static? 
+
+
+# 10/22/2024 
+
+Reading through the descriptor, I think I have better idea of what is going on in the report. 
+
+
+This is the descriptor for a single finger. 
+
+```
+b'\x05\x0D'       #   Usage Page (Digitizer)
+b'\x09\x22'       #   Usage (Finger)
+b'\xA1\x02'       #   Collection (Logical)
+b'\x09\x47'       #     Usage (\x47) -> **Touch Valid**
+b'\x09\x42'       #     Usage (Tip Switch)
+b'\x15\x00'       #     Logical Minimum (0)
+b'\x25\x01'       #     Logical Maximum (1)
+b'\x75\x01'       #     Report Size (1)
+b'\x95\x02'       #     Report Count (2)
+b'\x81\x02'       #     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+b'\x95\x06'       #     Report Count (6)
+b'\x81\x03'       #     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+b'\x09\x51'       #     Usage (\x51) -> **Contact Identifier**
+b'\x25\x0F'       #     Logical Maximum (15)
+b'\x75\x08'       #     Report Size (8)
+b'\x95\x01'       #     Report Count (1)
+b'\x81\x02'       #     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+b'\x05\x01'       #     Usage Page (Generic Desktop Ctrls)
+b'\x09\x30'       #     Usage (X)
+b'\x75\x10'       #     Report Size (16)
+b'\x55\x0E'       #     Unit Exponent (-2)
+b'\x65\x11'       #     Unit (System: SI Linear'Length: Centimeter)
+b'\x35\x00'       #     Physical Minimum (0)
+b'\x46\x5A\x04' #     Physical Maximum (1114)
+b'\x27\x39\x05\x00\x00' #     Logical Maximum (1336)
+b'\x81\x02'       #     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+b'\x09\x31'       #     Usage (Y)
+b'\x46\xDA\x02' #     Physical Maximum (730)
+b'\x27\x6C\x03\x00\x00' #     Logical Maximum (875)
+b'\x81\x02'       #     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+```
+
+Usage (0x47) is followed by Usage (0x42 - Tip Switch). According to [Microsoft documentation for Digitizer Report Descriptors](https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/supporting-usages-in-digitizer-report-descriptors), 0x47 is for Confidence (or Touch Valid in [HID Usage Tables 1.5](https://usb.org/document-library/hid-usage-tables-15) and 0x42 is for Tip (Tip Switch?).
+
+So one bit for Confidence, another bit for Tip each with Logical Minimum 0 to Logical Maximum 1. And some padding for 6 bits? 
+
+And for Usage 0x51, [HID Usage Tables 1.5](https://usb.org/document-library/hid-usage-tables-15) indicates that byte 0x51 corresponds to Contact Identifier. So That is indeed the finger index. 
+
+So for each finger, I have the following:
+
+| Finger 0 Confidence + Tip Switch | Finger 0 index | Finger 0 X Lower Byte | Finger 0 X Higher Byte | Finger 0 Y  Lower Byte | Finger 0 Y Higher Byte | 
+|---|---|---|---|---|---|
+|03 | 00 | f3 | 04 | 37 | 00 |
+
+
+And after 5 fingers, I have this section
+
+```
+b'\x05\x0D'       #   Usage Page (Digitizer)
+b'\x09\x54'       #   Usage (\x54) -> **Contact Count**
+b'\x15\x00'       #   Logical Minimum (0)
+b'\x25\x05'       #   Logical Maximum (5)
+b'\x75\x08'       #   Report Size (8)
+b'\x95\x01'       #   Report Count (1)
+b'\x81\x02'       #   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+b'\x05\x09'       #   Usage Page (Button)
+b'\x09\x01'       #   Usage (\x01)
+b'\x09\x02'       #   Usage (\x02)
+b'\x09\x03'       #   Usage (\x03)
+b'\x15\x00'       #   Logical Minimum (0)
+b'\x25\x01'       #   Logical Maximum (1)
+b'\x75\x01'       #   Report Size (1)
+b'\x95\x03'       #   Report Count (3)
+b'\x81\x02'       #   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+b'\x95\x05'       #   Report Count (5)
+b'\x81\x03'       #   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+b'\x05\x0D'       #   Usage Page (Digitizer)
+b'\x09\x56'       #   Usage (\x56) -> **Scan Time**
+b'\x55\x0C'       #   Unit Exponent (-4)
+b'\x66\x01\x10' #   Unit (System: SI Linear'Time: Seconds)
+b'\x35\x00'       #   Physical Minimum (0)
+b'\x47\xFF\xFF\x00\x00' #   Physical Maximum (65534)
+b'\x15\x00'       #   Logical Minimum (0)
+b'\x27\xFF\xFF\x00\x00' #   Logical Maximum (65534)
+b'\x75\x10'       #   Report Size (16)
+b'\x95\x01'       #   Report Count (1)
+b'\x81\x02'       #   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+```
+
+
+Usage 0x54 means Contact Count, so that matches my earlier analysis that this byte indicates number of total detected fingers. 
+
+The second byte is for Button, which consists of 3 bits for each button. I don't think this touchpad module can do button presses unless it is mounted to some external frame like it is on an actual framework laptop. So it will always be 0 for me. Or maybe the touchpad supports actual buttons like in Thinkpad touch pads. 
+
+Finally the remaining data has usage 0x56, which is Scan Time. This ranges from 0 to 65534, so I guess it uses the remaining two bytes. So it was not report ID, but instead the serial time data of the particular touch. 
+
+
+| Number of fingers | Number of Buttons pressed  | Scan time lower byte | Scan time higher byte |
+| --- | --- | --- | --- |
+|05 | 00 | e2 | d5 |
+
+
+That's everything!
+
+
+| Finger 0 Confidence + Tip Switch | Finger 0 index | Finger 0 X Lower Byte | Finger 0 X Higher Byte | Finger 0 Y  Lower Byte | Finger 0 Y Higher Byte | Finger 1  Confidence + Tip Switch | Finger 1 index | Finger 1 X Lower Byte | Finger 1 X Higher Byte | Finger 1 Y  Lower Byte | Finger 1 Y Higher Byte | Finger 2 Confidence + Tip Switch | Finger 2 index | Finger 2 X Lower Byte | Finger 2 X Higher Byte | Finger 2 Y  Lower Byte | Finger 2 Y Higher Byte | Finger 3 Confidence + Tip Switch | Finger 3 index | Finger 3 X Lower Byte | Finger 3 X Higher Byte | Finger 3 Y  Lower Byte | Finger 3 Y Higher Byte | Finger 4 Confidence + Tip Switch | Finger 4 index | Finger 4 X Lower Byte | Finger 4 X Higher Byte | Finger 4 Y  Lower Byte | Finger 4 Y Higher Byte | Number of fingers (Contact Count) | Number of Buttons pressed  | Scan time lower byte | Scan time higher byte |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---| --- | --- | --- | --- |
+|03 | 00 | f3 | 04 | 37 | 00 |03 | 01 | f3 | 04 | 37 | 00 |03 | 02 | f3 | 04 | 37 | 00 |03 | 03 | f3 | 04 | 37 | 00 |03 | 04 | f3 | 04 | 37 | 00 | 05 | 00 | e2 | d5 |
+
+
+
+
+What's odd is I could not read the input report from register 0x24. It was available by just doing a read on I2C device at 0x2C directly. 
+
+Now that I know what the HID report means, next step is to check if operating system can readily pick this up when I forward it.
