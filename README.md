@@ -1179,9 +1179,10 @@ Finally the remaining data has usage 0x56, which is Scan Time. This ranges from 
 That's everything!
 
 
-| Finger 0 Confidence + Tip Switch | Finger 0 index | Finger 0 X Lower Byte | Finger 0 X Higher Byte | Finger 0 Y  Lower Byte | Finger 0 Y Higher Byte | Finger 1  Confidence + Tip Switch | Finger 1 index | Finger 1 X Lower Byte | Finger 1 X Higher Byte | Finger 1 Y  Lower Byte | Finger 1 Y Higher Byte | Finger 2 Confidence + Tip Switch | Finger 2 index | Finger 2 X Lower Byte | Finger 2 X Higher Byte | Finger 2 Y  Lower Byte | Finger 2 Y Higher Byte | Finger 3 Confidence + Tip Switch | Finger 3 index | Finger 3 X Lower Byte | Finger 3 X Higher Byte | Finger 3 Y  Lower Byte | Finger 3 Y Higher Byte | Finger 4 Confidence + Tip Switch | Finger 4 index | Finger 4 X Lower Byte | Finger 4 X Higher Byte | Finger 4 Y  Lower Byte | Finger 4 Y Higher Byte | Number of fingers (Contact Count) | Number of Buttons pressed  | Scan time lower byte | Scan time higher byte |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---| --- | --- | --- | --- |
-|03 | 00 | f3 | 04 | 37 | 00 |03 | 01 | f3 | 04 | 37 | 00 |03 | 02 | f3 | 04 | 37 | 00 |03 | 03 | f3 | 04 | 37 | 00 |03 | 04 | f3 | 04 | 37 | 00 | 05 | 00 | e2 | d5 |
+| | Finger 0 Confidence + Tip Switch | Finger 0 index | Finger 0 X Lower Byte | Finger 0 X Higher Byte | Finger 0 Y  Lower Byte | Finger 0 Y Higher Byte | Finger 1  Confidence + Tip Switch | Finger 1 index | Finger 1 X Lower Byte | Finger 1 X Higher Byte | Finger 1 Y  Lower Byte | Finger 1 Y Higher Byte | Finger 2 Confidence + Tip Switch | Finger 2 index | Finger 2 X Lower Byte | Finger 2 X Higher Byte | Finger 2 Y  Lower Byte | Finger 2 Y Higher Byte | Finger 3 Confidence + Tip Switch | Finger 3 index | Finger 3 X Lower Byte | Finger 3 X Higher Byte | Finger 3 Y  Lower Byte | Finger 3 Y Higher Byte | Finger 4 Confidence + Tip Switch | Finger 4 index | Finger 4 X Lower Byte | Finger 4 X Higher Byte | Finger 4 Y  Lower Byte | Finger 4 Y Higher Byte | Number of fingers (Contact Count) | Number of Buttons pressed  | Scan time lower byte | Scan time higher byte |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---| --- | --- | --- | --- |
+|index | 00| 01 |02|03|04|05|06|07|08|09|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|
+| byte |03 | 00 | f3 | 04 | 37 | 00 |03 | 01 | f3 | 04 | 37 | 00 |03 | 02 | f3 | 04 | 37 | 00 |03 | 03 | f3 | 04 | 37 | 00 |03 | 04 | f3 | 04 | 37 | 00 | 05 | 00 | e2 | d5 |
 
 
 
