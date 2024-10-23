@@ -1118,9 +1118,25 @@ b'\x81\x02'       #     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Nu
 
 Usage (0x47) is followed by Usage (0x42 - Tip Switch). According to [Microsoft documentation for Digitizer Report Descriptors](https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/supporting-usages-in-digitizer-report-descriptors), 0x47 is for Confidence (or Touch Valid in [HID Usage Tables 1.5](https://usb.org/document-library/hid-usage-tables-15) and 0x42 is for Tip (Tip Switch?).
 
+
+> Touch Valid: Indicates the device’s confidence that the touch contact was an intended, valid
+contact. The device should report 0 if the contact is not a valid touch. The device
+should report 1 if the contact is intended and valid (e.g. a pointing touch)
+
+> Tip Switch: A switch located at the tip of a stylus, indicating contact of the stylus with a surface.
+A pen-based system or system extension would use this switch to enable the input
+of handwriting or gesture data. The system typically maps Tip Switch to a primary
+button in a non-pen context
+
 So one bit for Confidence, another bit for Tip each with Logical Minimum 0 to Logical Maximum 1. And some padding for 6 bits? 
 
 And for Usage 0x51, [HID Usage Tables 1.5](https://usb.org/document-library/hid-usage-tables-15) indicates that byte 0x51 corresponds to Contact Identifier. So That is indeed the finger index. 
+
+> Contact Identifier: An identifier associated with a contact. The id persists for the duration of that
+contact’s detection, but may be reused for another contact once the original is no
+longer detected. Detection is assumed to extend from contact down to contact
+up notifications (or for devices that support hover detection, contact in-range to
+out-of-range).
 
 So for each finger, I have the following:
 
@@ -1166,10 +1182,20 @@ b'\x81\x02'       #   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null
 
 Usage 0x54 means Contact Count, so that matches my earlier analysis that this byte indicates number of total detected fingers. 
 
+> Contact Count: The current number of contacts the digitizer detects and is reporting.
+
 The second byte is for Button, which consists of 3 bits for each button. I don't think this touchpad module can do button presses unless it is mounted to some external frame like it is on an actual framework laptop. So it will always be 0 for me. Or maybe the touchpad supports actual buttons like in Thinkpad touch pads. 
 
 Finally the remaining data has usage 0x56, which is Scan Time. This ranges from 0 to 65534, so I guess it uses the remaining two bytes. So it was not report ID, but instead the serial time data of the particular touch. 
 
+
+> Scan Time: For each frame reported, the digitizer shall report a timestamp in relative time. The
+units are in 100 microseconds by default. The first scan time received is treated as
+a base time for subsequent reported times. This value represents the time difference
+from the first frame that was reported after a device starts reporting data subsequent
+to a period of inactivity. The time differences between reported scan times should
+reflect the scanning frequency of the digitizer. The scan time value should be the
+same for all contacts within a frame.
 
 | Number of fingers | Number of Buttons pressed  | Scan time lower byte | Scan time higher byte |
 | --- | --- | --- | --- |
@@ -1190,3 +1216,200 @@ That's everything!
 What's odd is I could not read the input report from register 0x24. It was available by just doing a read on I2C device at 0x2C directly. 
 
 Now that I know what the HID report means, next step is to check if operating system can readily pick this up when I forward it.
+
+
+
+While the descriptor is 687 bytes long, it looks like the only relevant part of the descriptor is the following: 
+
+```
+0x05, 0x0D,        // Usage Page (Digitizer)
+0x09, 0x05,        // Usage (Touch Pad)
+0xA1, 0x01,        // Collection (Application)
+0x85, 0x01,        //   Report ID (1)
+0x05, 0x0D,        //   Usage Page (Digitizer)
+0x09, 0x22,        //   Usage (Finger)
+0xA1, 0x02,        //   Collection (Logical)
+0x09, 0x47,        //     Usage (0x47)
+0x09, 0x42,        //     Usage (Tip Switch)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x01,        //     Logical Maximum (1)
+0x75, 0x01,        //     Report Size (1)
+0x95, 0x02,        //     Report Count (2)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x95, 0x06,        //     Report Count (6)
+0x81, 0x03,        //     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x51,        //     Usage (0x51)
+0x25, 0x0F,        //     Logical Maximum (15)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x01,        //     Usage Page (Generic Desktop Ctrls)
+0x09, 0x30,        //     Usage (X)
+0x75, 0x10,        //     Report Size (16)
+0x55, 0x0E,        //     Unit Exponent (-2)
+0x65, 0x11,        //     Unit (System: SI Linear, Length: Centimeter)
+0x35, 0x00,        //     Physical Minimum (0)
+0x46, 0x5A, 0x04,  //     Physical Maximum (1114)
+0x27, 0x39, 0x05, 0x00, 0x00,  //     Logical Maximum (1336)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x31,        //     Usage (Y)
+0x46, 0xDA, 0x02,  //     Physical Maximum (730)
+0x27, 0x6C, 0x03, 0x00, 0x00,  //     Logical Maximum (875)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x05, 0x0D,        //   Usage Page (Digitizer)
+0x09, 0x22,        //   Usage (Finger)
+0xA1, 0x02,        //   Collection (Logical)
+0x09, 0x47,        //     Usage (0x47)
+0x09, 0x42,        //     Usage (Tip Switch)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x01,        //     Logical Maximum (1)
+0x75, 0x01,        //     Report Size (1)
+0x95, 0x02,        //     Report Count (2)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x95, 0x06,        //     Report Count (6)
+0x81, 0x03,        //     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x51,        //     Usage (0x51)
+0x25, 0x0F,        //     Logical Maximum (15)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x01,        //     Usage Page (Generic Desktop Ctrls)
+0x09, 0x30,        //     Usage (X)
+0x75, 0x10,        //     Report Size (16)
+0x55, 0x0E,        //     Unit Exponent (-2)
+0x65, 0x11,        //     Unit (System: SI Linear, Length: Centimeter)
+0x35, 0x00,        //     Physical Minimum (0)
+0x46, 0x5A, 0x04,  //     Physical Maximum (1114)
+0x27, 0x39, 0x05, 0x00, 0x00,  //     Logical Maximum (1336)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x31,        //     Usage (Y)
+0x46, 0xDA, 0x02,  //     Physical Maximum (730)
+0x27, 0x6C, 0x03, 0x00, 0x00,  //     Logical Maximum (875)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x05, 0x0D,        //   Usage Page (Digitizer)
+0x09, 0x22,        //   Usage (Finger)
+0xA1, 0x02,        //   Collection (Logical)
+0x09, 0x47,        //     Usage (0x47)
+0x09, 0x42,        //     Usage (Tip Switch)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x01,        //     Logical Maximum (1)
+0x75, 0x01,        //     Report Size (1)
+0x95, 0x02,        //     Report Count (2)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x95, 0x06,        //     Report Count (6)
+0x81, 0x03,        //     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x51,        //     Usage (0x51)
+0x25, 0x0F,        //     Logical Maximum (15)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x01,        //     Usage Page (Generic Desktop Ctrls)
+0x09, 0x30,        //     Usage (X)
+0x75, 0x10,        //     Report Size (16)
+0x55, 0x0E,        //     Unit Exponent (-2)
+0x65, 0x11,        //     Unit (System: SI Linear, Length: Centimeter)
+0x35, 0x00,        //     Physical Minimum (0)
+0x46, 0x5A, 0x04,  //     Physical Maximum (1114)
+0x27, 0x39, 0x05, 0x00, 0x00,  //     Logical Maximum (1336)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x31,        //     Usage (Y)
+0x46, 0xDA, 0x02,  //     Physical Maximum (730)
+0x27, 0x6C, 0x03, 0x00, 0x00,  //     Logical Maximum (875)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x05, 0x0D,        //   Usage Page (Digitizer)
+0x09, 0x22,        //   Usage (Finger)
+0xA1, 0x02,        //   Collection (Logical)
+0x09, 0x47,        //     Usage (0x47)
+0x09, 0x42,        //     Usage (Tip Switch)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x01,        //     Logical Maximum (1)
+0x75, 0x01,        //     Report Size (1)
+0x95, 0x02,        //     Report Count (2)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x95, 0x06,        //     Report Count (6)
+0x81, 0x03,        //     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x51,        //     Usage (0x51)
+0x25, 0x0F,        //     Logical Maximum (15)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x01,        //     Usage Page (Generic Desktop Ctrls)
+0x09, 0x30,        //     Usage (X)
+0x75, 0x10,        //     Report Size (16)
+0x55, 0x0E,        //     Unit Exponent (-2)
+0x65, 0x11,        //     Unit (System: SI Linear, Length: Centimeter)
+0x35, 0x00,        //     Physical Minimum (0)
+0x46, 0x5A, 0x04,  //     Physical Maximum (1114)
+0x27, 0x39, 0x05, 0x00, 0x00,  //     Logical Maximum (1336)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x31,        //     Usage (Y)
+0x46, 0xDA, 0x02,  //     Physical Maximum (730)
+0x27, 0x6C, 0x03, 0x00, 0x00,  //     Logical Maximum (875)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x05, 0x0D,        //   Usage Page (Digitizer)
+0x09, 0x22,        //   Usage (Finger)
+0xA1, 0x02,        //   Collection (Logical)
+0x09, 0x47,        //     Usage (0x47)
+0x09, 0x42,        //     Usage (Tip Switch)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x01,        //     Logical Maximum (1)
+0x75, 0x01,        //     Report Size (1)
+0x95, 0x02,        //     Report Count (2)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x95, 0x06,        //     Report Count (6)
+0x81, 0x03,        //     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x51,        //     Usage (0x51)
+0x25, 0x0F,        //     Logical Maximum (15)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x01,        //     Report Count (1)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x01,        //     Usage Page (Generic Desktop Ctrls)
+0x09, 0x30,        //     Usage (X)
+0x75, 0x10,        //     Report Size (16)
+0x55, 0x0E,        //     Unit Exponent (-2)
+0x65, 0x11,        //     Unit (System: SI Linear, Length: Centimeter)
+0x35, 0x00,        //     Physical Minimum (0)
+0x46, 0x5A, 0x04,  //     Physical Maximum (1114)
+0x27, 0x39, 0x05, 0x00, 0x00,  //     Logical Maximum (1336)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x09, 0x31,        //     Usage (Y)
+0x46, 0xDA, 0x02,  //     Physical Maximum (730)
+0x27, 0x6C, 0x03, 0x00, 0x00,  //     Logical Maximum (875)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x05, 0x0D,        //   Usage Page (Digitizer)
+0x09, 0x54,        //   Usage (0x54)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x05,        //   Logical Maximum (5)
+0x75, 0x08,        //   Report Size (8)
+0x95, 0x01,        //   Report Count (1)
+0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x09,        //   Usage Page (Button)
+0x09, 0x01,        //   Usage (0x01)
+0x09, 0x02,        //   Usage (0x02)
+0x09, 0x03,        //   Usage (0x03)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x01,        //   Logical Maximum (1)
+0x75, 0x01,        //   Report Size (1)
+0x95, 0x03,        //   Report Count (3)
+0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x95, 0x05,        //   Report Count (5)
+0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x0D,        //   Usage Page (Digitizer)
+0x09, 0x56,        //   Usage (0x56)
+0x55, 0x0C,        //   Unit Exponent (-4)
+0x66, 0x01, 0x10,  //   Unit (System: SI Linear, Time: Seconds)
+0x35, 0x00,        //   Physical Minimum (0)
+0x47, 0xFF, 0xFF, 0x00, 0x00,  //   Physical Maximum (65534)
+0x15, 0x00,        //   Logical Minimum (0)
+0x27, 0xFF, 0xFF, 0x00, 0x00,  //   Logical Maximum (65534)
+0x75, 0x10,        //   Report Size (16)
+0x95, 0x01,        //   Report Count (1)
+0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+```
+
+There are more information in the descriptor, such as 0x55: Contact Count Maximum, 0x59: Pad Type, Vendor defined 0xFF with 0xC6, 0xC7, 0x01, 0x06,   and 0x05 under it, 0x0E: Device Configuration, 0x57: Surface Switch, 0x58: Button Switch, and 0x60: Latency Mode but not all of them are in the report.
