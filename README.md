@@ -1537,3 +1537,31 @@ $ sudo hexdump -v -e '/1 "%02X "' /sys/bus/hid/devices/0018:093A:0274.0002/repor
 ```
 
 But the thing is, I was using the trimmed down 481 bytes version... Do I need to use the full descriptor, although the report is not sending any data for the later sections of the report?
+
+# 12/22/2024
+
+My goodness, after changing the descriptor to match the one that's sent from the device, the touchpad just started working. Even the gestures are working. In fact, the "Commit changes..." button will be clicked using the touchpad module.
+- Report is 35 bytes long
+- Report descriptor has to be the complete thing as is defined
+
+
+It is a little clunky, probably because the report sent from the micropython firmware is not optimized. 
+
+I guess I did not realize how simple the HID standard is supposed to be. It is supposed to just work, as long as the report descriptor and report is sent to the host device. And it does not matter what the transport medium is, be it I2C or USB. 
+
+Having a reference to compare the descriptor and report from an actual framework laptop was very helpful, but I am fairly confident the same methods I've tried to read the data from this device can readily be applied to any HID over I2C touchpad devices out there. 
+
+Now for the next steps. 
+0. Clean up this read me into a proper write up
+  - since this readme is a mess, it could use some clean up 
+1. Refine the firmware code so that the experience is comparable to the one installed in the actual laptop
+  - I'm currently polling the device for a valid input report, but the proper way would be using interrupts.
+2. Design an enclosure that packages the touchpad device and Raspberry Pi Pico together.
+  - shorter ZIF cable would be nice. Or it can be wrapped around like in the [Peacock touchpad](https://github.com/george-norton/peacock/commits?author=george-norton)
+  - I only need 5 pins out of the 51 pin ZIF connector. Breakout board can be slimmed down to only have ZIF connector and the relevant pins.
+    - custom PCB route; how do I solder ZIF connector?
+  - Likewise, I don't need all of the features and pins available on Raspberry Pi Pico. Microcontroller board could be slimmed down to only include the necessary bits
+    - again, custom PCB route; should be able to directly route touchpad pins to RP2040
+    - USB C would be nice
+3. Wireless communication?
+  - ESP32? Bluetooth? More to learn in this front
