@@ -1413,3 +1413,127 @@ While the descriptor is 687 bytes long, it looks like the only relevant part of 
 ```
 
 There are more information in the descriptor, such as 0x55: Contact Count Maximum, 0x59: Pad Type, Vendor defined 0xFF with 0xC6, 0xC7, 0x01, 0x06,   and 0x05 under it, 0x0E: Device Configuration, 0x57: Surface Switch, 0x58: Button Switch, and 0x60: Latency Mode but not all of them are in the report.
+
+
+# 12/22/2024
+
+After spending a lot of time going over MicroPython's USB HID library and its example codes, I now have a "somewhat working" code that can read and publish HID report over USB. 
+
+But nothing is happening. 
+
+Sometime this fall I finally gave in and purchased Framework 13, so I now had a solid answer to compare my data from the Pico. I connected my device to the laptop for debugging. 
+
+Using lsusb, I saw my device did indeed show up correctly: 
+
+```
+$ lsusb
+Bus 005 Device 012: ID 2e8a:0005 MicroPython Board in FS mode
+```
+
+Using `usbhid-dump -d2e8a:0005 -es`, I saw "something" was coming out of my device but it looked wrong. 
+
+Turns out, my descriptor was incorrect according to `usbhid-dump -d2e8a:0005 -ed`. 
+
+I made a mistake while converting descriptor format from the [Online Descriptor Analysis tool](http://eleccelerator.com/usbdescreqparser/) into Python byte array.. After correcting the data, I confirmed the descriptor from `usbhid-dump` matches the one I defined in my firmware code (trimmed down version that contains only the relevant information). 
+
+```
+$ usbhid-dump -d2e8a:0005 -ed
+005:012:002:DESCRIPTOR         1734844197.053573
+ 05 0D 09 05 A1 01 85 01 05 0D 09 22 A1 02 09 47
+ 09 42 15 00 25 01 75 01 95 02 81 02 95 06 81 03
+ 09 51 25 0F 75 08 95 01 81 02 05 01 09 30 75 10
+ 55 0E 65 11 35 00 46 5A 04 27 39 05 00 00 81 02
+ 09 31 46 DA 02 27 6C 03 00 00 81 02 C0 05 0D 09
+ 22 A1 02 09 47 09 42 15 00 25 01 75 01 95 02 81
+ 02 95 06 81 03 09 51 25 0F 75 08 95 01 81 02 05
+ 01 09 30 75 10 55 0E 65 11 35 00 46 5A 04 27 39
+ 05 00 00 81 02 09 31 46 DA 02 27 6C 03 00 00 81
+ 02 C0 05 0D 09 22 A1 02 09 47 09 42 15 00 25 01
+ 75 01 95 02 81 02 95 06 81 03 09 51 25 0F 75 08
+ 95 01 81 02 05 01 09 30 75 10 55 0E 65 11 35 00
+ 46 5A 04 27 39 05 00 00 81 02 09 31 46 DA 02 27
+ 6C 03 00 00 81 02 C0 05 0D 09 22 A1 02 09 47 09
+ 42 15 00 25 01 75 01 95 02 81 02 95 06 81 03 09
+ 51 25 0F 75 08 95 01 81 02 05 01 09 30 75 10 55
+ 0E 65 11 35 00 46 5A 04 27 39 05 00 00 81 02 09
+ 31 46 DA 02 27 6C 03 00 00 81 02 C0 05 0D 09 22
+ A1 02 09 47 09 42 15 00 25 01 75 01 95 02 81 02
+ 95 06 81 03 09 51 25 0F 75 08 95 01 81 02 05 01
+ 09 30 75 10 55 0E 65 11 35 00 46 5A 04 27 39 05
+ 00 00 81 02 09 31 46 DA 02 27 6C 03 00 00 81 02
+ C0 05 0D 09 54 15 00 25 05 75 08 95 01 81 02 05
+ 09 09 01 09 02 09 03 15 00 25 01 75 01 95 03 81
+ 02 95 05 81 03 05 0D 09 56 55 0C 66 01 10 35 00
+ 47 FF FF 00 00 15 00 27 FF FF 00 00 75 10 95 01
+ 81 02
+```
+
+But nothing is happening. 
+
+I then compared my actual report with the expected data from the real touchpad. 
+
+```
+$ sudo cat /sys/kernel/debug/hid/0018\:093A\:0274.0002/events
+01 03 00 20 05 0c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 3c f8
+Digitizers.ContactCount = 1
+Button.0001 = 0
+Button.0002 = 0
+Button.0003 = 0
+Digitizers.ScanTime = 63548
+Digitizers.TipSwitch = 1
+Digitizers.TouchValid = 1
+Digitizers.ContactIdentifier = 0
+GenericDesktop.X = 1312
+GenericDesktop.Y = 12
+Digitizers.TipSwitch = 0
+Digitizers.TouchValid = 0
+Digitizers.ContactIdentifier = 0
+GenericDesktop.X = 0
+GenericDesktop.Y = 0
+Digitizers.TipSwitch = 0
+Digitizers.TouchValid = 0
+Digitizers.ContactIdentifier = 0
+GenericDesktop.X = 0
+GenericDesktop.Y = 0
+Digitizers.TipSwitch = 0
+Digitizers.TouchValid = 0
+Digitizers.ContactIdentifier = 0
+GenericDesktop.X = 0
+GenericDesktop.Y = 0
+Digitizers.TipSwitch = 0
+Digitizers.TouchValid = 0
+Digitizers.ContactIdentifier = 0
+GenericDesktop.X = 0
+GenericDesktop.Y = 0
+```
+
+I was glad to see my earlier guesses were correct, but the report did not match what I was sending from the device. I thought I had to send 34 bytes, but the real report was 35 bytes long. After modifying the buffer and inserting 0x01 at the beginning of the report, I'm now sending pretty much the same data as the real touchpad: 
+
+```
+$ usbhid-dump -d2e8a:0005 -es
+005:012:002:STREAM             1734843878.706360
+ 01 03 00 24 05 1E 00 00
+
+005:012:002:STREAM             1734843878.714355
+ 00 00 00 00 00 00 00 00
+
+005:012:002:STREAM             1734843878.722349
+ 00 00 00 00 00 00 00 00
+
+005:012:002:STREAM             1734843878.730613
+ 00 00 00 00 00 00 00 01
+
+005:012:002:STREAM             1734843878.738339
+ 00 BC 00
+```
+
+But nothing is happening.
+
+I then checked the HID report descriptor from the real touchpad, and it also matched my earlier 687 bytes long descriptor.
+
+```
+$ sudo hexdump -v -e '/1 "%02X "' /sys/bus/hid/devices/0018:093A:0274.0002/report_descriptor 
+05 01 09 02 A1 01 85 02 05 01 09 01 A1 00 05 09 19 01 29 02 15 00 25 01 75 01 95 02 81 02 05 0D 09 32 75 01 95 01 81 02 75 05 95 01 81 03 05 01 75 10 95 01 35 00 45 00 16 00 80 26 FF 7F 09 30 81 26 16 00 80 26 FF 7F 09 31 81 26 C0 C0 05 0D 09 05 A1 01 85 01 05 0D 09 22 A1 02 09 47 09 42 15 00 25 01 75 01 95 02 81 02 95 06 81 03 09 51 25 0F 75 08 95 01 81 02 05 01 09 30 75 10 55 0E 65 11 35 00 46 5A 04 27 39 05 00 00 81 02 09 31 46 DA 02 27 6C 03 00 00 81 02 C0 05 0D 09 22 A1 02 09 47 09 42 15 00 25 01 75 01 95 02 81 02 95 06 81 03 09 51 25 0F 75 08 95 01 81 02 05 01 09 30 75 10 55 0E 65 11 35 00 46 5A 04 27 39 05 00 00 81 02 09 31 46 DA 02 27 6C 03 00 00 81 02 C0 05 0D 09 22 A1 02 09 47 09 42 15 00 25 01 75 01 95 02 81 02 95 06 81 03 09 51 25 0F 75 08 95 01 81 02 05 01 09 30 75 10 55 0E 65 11 35 00 46 5A 04 27 39 05 00 00 81 02 09 31 46 DA 02 27 6C 03 00 00 81 02 C0 05 0D 09 22 A1 02 09 47 09 42 15 00 25 01 75 01 95 02 81 02 95 06 81 03 09 51 25 0F 75 08 95 01 81 02 05 01 09 30 75 10 55 0E 65 11 35 00 46 5A 04 27 39 05 00 00 81 02 09 31 46 DA 02 27 6C 03 00 00 81 02 C0 05 0D 09 22 A1 02 09 47 09 42 15 00 25 01 75 01 95 02 81 02 95 06 81 03 09 51 25 0F 75 08 95 01 81 02 05 01 09 30 75 10 55 0E 65 11 35 00 46 5A 04 27 39 05 00 00 81 02 09 31 46 DA 02 27 6C 03 00 00 81 02 C0 05 0D 09 54 15 00 25 05 75 08 95 01 81 02 05 09 09 01 09 02 09 03 15 00 25 01 75 01 95 03 81 02 95 05 81 03 05 0D 09 56 55 0C 66 01 10 35 00 47 FF FF 00 00 15 00 27 FF FF 00 00 75 10 95 01 81 02 05 0D 09 55 15 00 25 05 75 08 95 01 85 03 B1 02 05 0D 09 59 15 00 25 0F 75 08 95 01 85 04 B1 02 06 00 FF 85 05 75 08 15 00 09 C6 25 08 95 01 B1 02 09 C7 26 FF 00 95 20 B1 02 C0 05 0D 09 0E A1 01 05 0D 09 22 A1 02 09 52 15 00 25 0A 75 08 95 01 85 06 B1 02 C0 05 0D 09 22 A1 00 09 57 09 58 15 00 25 01 75 01 95 02 85
+```
+
+But the thing is, I was using the trimmed down 481 bytes version... Do I need to use the full descriptor, although the report is not sending any data for the later sections of the report?
