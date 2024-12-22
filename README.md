@@ -1565,3 +1565,6 @@ Now for the next steps.
     - USB C would be nice
 3. Wireless communication?
   - ESP32? Bluetooth? More to learn in this front
+
+
+Slight complication: the touchpad works on Linux, but not on Windows. 
