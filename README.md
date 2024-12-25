@@ -1552,6 +1552,7 @@ I guess I did not realize how simple the HID standard is supposed to be. It is s
 Having a reference to compare the descriptor and report from an actual framework laptop was very helpful, but I am fairly confident the same methods I've tried to read the data from this device can readily be applied to any HID over I2C touchpad devices out there. 
 
 Now for the next steps. 
+
 0. Clean up this read me into a proper write up
   - since this readme is a mess, it could use some clean up 
 1. Refine the firmware code so that the experience is comparable to the one installed in the actual laptop
