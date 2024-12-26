@@ -1,0 +1,6 @@
+[submodule "KiCad/framework-touchpad/KiCad-RP-Pico"]
+	path = KiCad/framework-touchpad/KiCad-RP-Pico
+	url = https://github.com/ncarandini/KiCad-RP-Pico.git
+[submodule "KiCad/framework-touchpad/Kicad_FPC_board_ends"]
+	path = KiCad/framework-touchpad/Kicad_FPC_board_ends
+	url = https://github.com/mikeWShef/Kicad_FPC_board_ends.git

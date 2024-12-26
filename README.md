@@ -725,4 +725,8 @@ $ usbhid-dump -d2e8a:0005 -es
 - Design a 3D printed enclosure to mount the PCB and touchpad module. 
 
 ## Stretch goals 
-- Wireless report transfer 
+- Wireless report transfer (ESP32?)
+- Add Fingerprint sensor (could be a standalone project)
+
+
+## Kicad
