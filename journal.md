@@ -1608,4 +1608,6 @@ Option 2. Design everything from scratch
 
 Touchpad might also not work on Windows because I don't have the driver. If that's the case, what do I need for Windows to make it recognize this as a touchpad? Also is my thing working on Framework device because it already has a Framework's touchpad installed and configured in it?
 
+Confirmed that it works on a NixOS system; Framework said their touchpad driver is available in the kernel, so that must be why. 
 
+So the reason this is not working on Windows is likely because of the missing driver...
