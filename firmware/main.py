@@ -9,7 +9,6 @@ SDA_PIN = machine.Pin(4)
 SCL_PIN = machine.Pin(5)
 # TODO: using interrupt would be ideal.. 
 # INT_PIN = machine.Pin(14, machine.Pin.IN, machine.Pin.PULL_DOWN)
-
 TOUCHPAD_ADDR = 0x2C
 REPORT_ID = 0x01
 _INTERFACE_PROTOCOL_MOUSE = const(0x02)
@@ -57,3 +56,5 @@ def runner():
 
 
 runner()
+
+
