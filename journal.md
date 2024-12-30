@@ -58,7 +58,7 @@ I connected the board and the breakout board together. I'm not really sure how I
 Once I have the Elite C code set up and confirm the assembly is working, maybe I could design a smaller PCB with just the few pins I need for the touchpad. In the mean time, breadboard would be good enough for testing purposes. 
 
 Will come back after I solder some pins on both the board and Elite C. 
-
+w
 ## 2023/12/20
 Soldered the parts. Pardon the sloppy solder job!
 
@@ -1573,3 +1573,39 @@ Now for the next steps.
 
 
 Slight complication: the touchpad works on Linux, but not on Windows. 
+
+
+# 12/29/2024 
+Been brainstorming how to get the hardware side of things integrated. Touchpad uses 51 pin 0.3mm pitch Flexible Flat Cable, though I only need at most 5 pins out of 51. 
+If I don't want to use the giant breakout board, I need to solder the FFC connector which sounds like a lot of pain. It's not only SMD, but also painfully tiny and I doubt I can manage it by hand. 
+
+Another alternative is using a slightly larger pitch. 51 pin 0.3 mm pitch to 51 pin 0.5mm pitch cable is available, and 0.5 mm pitch connector sounds slightly more manageable. From what I gathered online, I should be able to hand solder or use hot air gun to get it done with a lot of flux and solder paste.
+
+Or I could live with the breakout board which already has the connector soldered, and maybe fold the FFC two times (90 degrees to the right then immediately 90 degrees to the left) to shorten the cable connection. Shortest cable I could find on AliExpress was 40mm, and the majority of vendors sell 60mm+ cables only. 
+
+I could design a custom RP2040 board which uses the breakout board as a hat, although having a FPC connector and pins directly routed on my custom board is the best solution. 
+
+I also learned that Framework 16's touchpad module does not use this 51 pin FFC to talk to the mother board. The key I2C and power pins are directly connected via the input module interface in the 16" model. That would be easier to work with, since I can even directly solder wires to those exposed pins, but I don't want to order a new module if possible. 
+
+
+Enclosure for the touchpad (3D Print)
+- slightly angled 
+- probably won't have too much room inside... 
+- mount the touchpad to the enclosure
+
+Option 1. Use the breakout board or use the off the shelf RPi Pico board
+1.1. Design a RP2040 board clone about the same size of the breakout board. Breakout board will be mounted to this custom board. 
+1.2. Cut the breakout board to reduce footprint, solder 5 pins to the slots I need
+1.3. Use RPi Pico (or equivalent) - [Waveshare RP2040-Zero](https://www.waveshare.com/wiki/RP2040-Zero) for smaller footprint?
+
+
+Option 2. Design everything from scratch 
+2.1 Need to order more cable (in case I mess up), FFC connector, FFC Converter
+2.2 Need to order soldering iron tip for fine work (hook? knife?), thinner gauge solder wire, solder paste, flux (Though flux would be good to have in general). Can use heat gun at the maker space 
+2.3 Need to order individual components for the RPi Pico clone boards and solder everything together 
+
+:thinking_face: 
+
+Touchpad might also not work on Windows because I don't have the driver. If that's the case, what do I need for Windows to make it recognize this as a touchpad? Also is my thing working on Framework device because it already has a Framework's touchpad installed and configured in it?
+
+

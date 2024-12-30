@@ -4,3 +4,6 @@
 [submodule "KiCad/framework-touchpad/Kicad_FPC_board_ends"]
 	path = KiCad/framework-touchpad/Kicad_FPC_board_ends
 	url = https://github.com/mikeWShef/Kicad_FPC_board_ends.git
+[submodule "KiCad/framework-touchpad/RP2040-Zero-Kicad"]
+	path = KiCad/framework-touchpad/RP2040-Zero-Kicad
+	url = https://github.com/CountParadox/RP2040-Zero-Kicad.git
