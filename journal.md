@@ -1611,3 +1611,8 @@ Touchpad might also not work on Windows because I don't have the driver. If that
 Confirmed that it works on a NixOS system; Framework said their touchpad driver is available in the kernel, so that must be why. 
 
 So the reason this is not working on Windows is likely because of the missing driver...
+
+
+Got the interrupt code working. Not sure why the same code wasn't working before. However the current interrupt code is barely usable. It does not register cursor movements well at all. My guess is either I have some kind of bouncing, or the rate is off. 
+
+Progress nonetheless. 

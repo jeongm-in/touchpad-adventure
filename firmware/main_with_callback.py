@@ -9,7 +9,7 @@ SDA_PIN = machine.Pin(4)
 SCL_PIN = machine.Pin(5)
 
 INT_PIN = machine.Pin(14, machine.Pin.IN, machine.Pin.PULL_UP)
-interrupt_flag = 1
+IS_DEBUG = False
 
 TOUCHPAD_ADDR = 0x2C
 REPORT_ID = 0x01
@@ -19,16 +19,6 @@ _TOUCH_PAD_REPORT_DESC = (
 )
 
 i2c = machine.I2C(0, sda=SDA_PIN, scl=SCL_PIN, freq=400000)
-
-
-# TODO: Send report inside the callback. 
-# Interrupt code from: https://electrocredible.com/raspberry-pi-pico-external-interrupts-button-micropython/
-def callback(pin):
-    global interrupt_flag
-    print(f'current: ${interrupt_flag}')
-    interrupt_flag = 1
-        
-
 
 
 class TouchPadInterface(HIDInterface):
@@ -43,33 +33,35 @@ class TouchPadInterface(HIDInterface):
     
     def send_report(self, report):     
         struct.pack_into('35B', self._buf, 0, REPORT_ID, *report)
-        # print(' '.join('{:02x}'.format(x) for x in self._buf))
-        return super().send_report(self._buf)
+        if IS_DEBUG:
+            print(' '.join('{:02x}'.format(x) for x in self._buf))
+        else:
+            return super().send_report(self._buf)
     
+    # TODO: Somewhat works; can send the report, but it isn't working as nicely. Rate? Bouncing? 
+    def callback(self, pin):
+        # Code for fetching the report from https://hackaday.com/2024/04/17/human-interfacing-devices-hid-over-i2c/
+        report_len = i2c.readfrom(TOUCHPAD_ADDR, 1)[0]
+        if report_len:
+            report = i2c.readfrom(TOUCHPAD_ADDR, report_len)
+            if report[2] == REPORT_ID:                    
+                report = report[3:]
+                self.send_report(report)
+
+            
 def runner():
-    INT_PIN.irq(trigger=machine.Pin.IRQ_FALLING, handler=callback)
-    global interrupt_flag
+    
     TP = TouchPadInterface()
-    usb.device.get().init(TP, builtin_driver=True)
+    INT_PIN.irq(trigger=machine.Pin.IRQ_FALLING, handler=TP.callback)
+    
+    if not IS_DEBUG:
+        usb.device.get().init(TP, builtin_driver=True)
 
     # wait for host to enumerate as a HID device
     while not TP.is_open():
         time.sleep_ms(100)
-        
-    
-    while True:
-        try:
-            if interrupt_flag is 1:
-                # Report fetch code from https://hackaday.com/2024/04/17/human-interfacing-devices-hid-over-i2c/
-                report_len = i2c.readfrom(TOUCHPAD_ADDR, 1)[0]
-                if report_len:
-                    report = i2c.readfrom(TOUCHPAD_ADDR, report_len)
-                    if report[2] == REPORT_ID:                    
-                        report = report[3:]
-                        TP.send_report(report)
-                interrupt_flag = 0
-        except OSError:
-            print("Nothing burger")
+       
+    pass
 
 
 runner()

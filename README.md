@@ -589,7 +589,7 @@ The complete descriptor table looks like this:
 
 Now that I have descriptor and the report, it's time to actually put everything together and send the report to the host system. I thought I had to read the HID report and then convert it into some kind of mouse movement within the microcontroller code, but it turns out I can simply forward the HID report and the host system can pick up whatever signal I'm sending to the touchpad. 
 
-Starting in Micropython version 1.23, [Micropython supports USB device mode](https://github.com/micropython/micropython-lib/tree/master/micropython/usb) that allows using Raspberry Pi Pico as USB HID device. By combining my existing code and the sample [mouse.py](https://github.com/micropython/micropython-lib/blob/master/micropython/usb/usb-device-mouse/usb/device/mouse.py) within the library, I now have the following firmware code (also available in [main.py](https://github.com/jeongm-in/touchpad-adventure/blob/main/firmware/main.py))
+Starting in Micropython version 1.23, [Micropython supports USB device mode](https://github.com/micropython/micropython-lib/tree/master/micropython/usb) that allows using Raspberry Pi Pico as USB HID device. By combining my existing code and the sample [mouse.py](https://github.com/micropython/micropython-lib/blob/master/micropython/usb/usb-device-mouse/usb/device/mouse.py) within the library, I now have the following firmware code (also available in [firwmare directory](https://github.com/jeongm-in/touchpad-adventure/blob/main/firmware))
 
 ```python
 from micropython import const
