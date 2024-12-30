@@ -1616,3 +1616,9 @@ So the reason this is not working on Windows is likely because of the missing dr
 Got the interrupt code working. Not sure why the same code wasn't working before. However the current interrupt code is barely usable. It does not register cursor movements well at all. My guess is either I have some kind of bouncing, or the rate is off. 
 
 Progress nonetheless. 
+
+I need to send multiple report over time. Is interrupt choking the reports sent from the device? 
+
+TODO: check the benchmark data rate from the laptop, and tweak the device to match that; 
+
+TODO: Read more on how I2C interrupt is supposed to work. Does it make sense to send in the interrupt callback? 
