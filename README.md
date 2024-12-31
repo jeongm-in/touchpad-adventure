@@ -1,6 +1,6 @@
 # touchpad-adventure
 
-Repurposing [Framework](https://frame.work/)'s [Touchpad module for Framework 13'](https://frame.work/products/touchpad-kit?v=FRANFT0001) as a stand alone device using Raspberry Pi Pico, inspired by [Framework Magic Trackpad](https://community.frame.work/t/framework-magic-trackpad/19453) forum post and [Hackaday HID series by Arya Voronova](https://hackaday.com/2024/04/17/human-interfacing-devices-hid-over-i2c/)
+Repurposing [Framework](https://frame.work/)'s [Touchpad module for Framework 13'](https://frame.work/products/touchpad-kit?v=FRANFT0001) as a stand alone device using Raspberry Pi Pico, inspired by [Framework Magic Trackpad](https://community.frame.work/t/framework-magic-trackpad/19453) forum post and [HID articles on Hackaday by Arya Voronova](https://hackaday.com/2024/04/17/human-interfacing-devices-hid-over-i2c/)
 
 
 ## Framework touchpad module
@@ -148,7 +148,7 @@ I made some best effort guesses to figure out what this data meant. But to reall
 
 HID Report is nothing more than a binary data sent from the HID device. HID Report descriptor is a schematic for a given HID report, which outlines what each parts of the report's binary data means and describes the range limit of each part. 
 
-I had some data to work with, such as report descriptor data in [Arya's repository](https://github.com/0xAryaCAFE/spicy-micropython/blob/3810a95b423668ce8a7be2f6eb615eec5d33fedd/ports/rp2/tusb_port.c#L142). Apparently Arya and many other people were already here, but I couldn't find how to turn this device into a stand alone device just yet. 
+I had some data to work with, such as report descriptor data in [Arya's repository](https://github.com/0xAryaCAFE/spicy-micropython/blob/3810a95b423668ce8a7be2f6eb615eec5d33fedd/ports/rp2/tusb_port.c#L142). Apparently Arya and many other people were already here, but I couldn't readily find a way to turn this module into a stand alone device online.
 
 I also learned that HID device usually stores its HID descriptor on the device so that the host machine can interact with it. I updated my earlier code to "dump" some data from each address under 0x2C. 
 
@@ -530,9 +530,9 @@ In addition to the report descriptor, I found that register 0x20 holds [Required
 All in all, these addresses hold the key information: 
 
 Address: 0x2C
-    - 0x20: Required I2C HID Descriptor
-    - 0x21: HID Input Report Descriptor
-    - 0x24: HID Input Report 
+- 0x20: Required I2C HID Descriptor
+- 0x21: HID Input Report Descriptor
+- 0x24: HID Input Report 
 
 
 And using the HID report descriptor, I now know what each parts of my report means. 
@@ -587,7 +587,7 @@ The complete descriptor table looks like this:
 
 ## Putting everything together
 
-Now that I have descriptor and the report, it's time to actually put everything together and send the report to the host system. I thought I had to read the HID report and then convert it into some kind of mouse movement within the microcontroller code, but it turns out I can simply forward the HID report and the host system can pick up whatever signal I'm sending to the touchpad. 
+Now that I have the descriptor and where to find the report, it's time to actually put everything together and send the report to the host system. I thought I had to read the HID report and then convert it into some kind of mouse movement within the microcontroller code, but it turns out I can simply forward the HID report and the host system can pick up whatever signal I'm sending to the touchpad. 
 
 Starting in Micropython version 1.23, [Micropython supports USB device mode](https://github.com/micropython/micropython-lib/tree/master/micropython/usb) that allows using Raspberry Pi Pico as USB HID device. By combining my existing code and the sample [mouse.py](https://github.com/micropython/micropython-lib/blob/master/micropython/usb/usb-device-mouse/usb/device/mouse.py) within the library, I now have the following firmware code (also available in [firwmare directory](https://github.com/jeongm-in/touchpad-adventure/blob/main/firmware))
 
@@ -661,7 +661,7 @@ $ usbhid-dump -d2e8a:0005 -es
 
 - [ ] Touchpad currently does not work on Windows. Need to find out why it's not working and come up with a fix (driver issue?) 
 - [x] Current firmware code relies on polling. Touchpad has Interrupt pin, so I assume interrupt based report is possible. 
-  - done, but needs to optimize as interupt is buggy. 
+  - done, but needs to optimize as interrupt is buggy. 
 - Design a custom PCB with smaller footprint that integrates both RP2040 (complete RPI Pico board?) and the ZIF breakout for the 5 pins. 
 - Design a 3D printed enclosure to mount the PCB and touchpad module. 
 
