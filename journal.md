@@ -1622,3 +1622,15 @@ I need to send multiple report over time. Is interrupt choking the reports sent 
 TODO: check the benchmark data rate from the laptop, and tweak the device to match that; 
 
 TODO: Read more on how I2C interrupt is supposed to work. Does it make sense to send in the interrupt callback? 
+
+
+
+# 12/30/2024
+
+There might be some choking happening from the irq. 
+
+Also, maybe the interrupt is intended for the host system to use, not the microcontroller that's working as a bridge. 
+
+Polling is working a-ok... for now... 
+
+
