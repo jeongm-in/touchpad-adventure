@@ -1633,4 +1633,14 @@ Also, maybe the interrupt is intended for the host system to use, not the microc
 
 Polling is working a-ok... for now... 
 
+Bugs found so far: 
 
+Polling: 
+- Sometimes one of the finger gets "locked," causing the gestures to go all haywire
+  - could add a button to reset
+  - or fix the report registration 
+- When scrolling, lift all fingers, and then click on a different spot on the touchpad, cursor sometimes jumps to the different spot. It thinks I scrolled to that location instead of registering it as click. 
+- Click sometimes needs some attempts to actually register
+
+Interrupt: 
+- Cannot move cursors at all. Clicks and Double clicks sometimes work
