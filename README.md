@@ -668,3 +668,12 @@ $ usbhid-dump -d2e8a:0005 -es
 ## Stretch goals 
 - Wireless report transfer (ESP32?)
 - Add Fingerprint sensor (could be a standalone project)
+
+
+## FT260?
+I was reading more into FT260 (and to make use of the evaluation board I purchased), as it should in theory achieve what I'm doing with Pi Pico here. However, according to spec sheet, [the max report descriptor size supported by FT260S is 500 bytes](https://ftdichip.com/wp-content/uploads/2020/08/AN_399_FT260_HID-over-I2C.pdf), when our report descriptor size is 687 bytes long. Too bad. 
+
+> The length, in unsigned bytes, of the Report Descriptor. Please note that FT260 only supports maximum size of 500 bytes
+
+## May 2025 update 
+Just to cross the finish line, I am not designing a custom PCB at this point; instead I'm using the 51 pin breakout board and WaveShare Pi Zero directly. I have been working on a 3D printed enclosure for the touchpad, and once I'm done prototyping, I will upload models and bill of material (I am using some screws and magnets) to this repository. However, the firmware is very clunky and almost unusable. Thankfully WaveShare Pi Zero has reset button, so I've been punching reset button whenever touchpad glitches out. But once I put everything in enclosure, I will lose access to the reset button unless I add another switch elsewhere. I will need to refine the firmware and see if I can make it better.. 
