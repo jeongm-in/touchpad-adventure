@@ -677,3 +677,20 @@ I was reading more into FT260 (and to make use of the evaluation board I purchas
 
 ## May 2025 update 
 Just to cross the finish line, I am not designing a custom PCB at this point; instead I'm using the 51 pin breakout board and WaveShare Pi Zero directly. I have been working on a 3D printed enclosure for the touchpad, and once I'm done prototyping, I will upload models and bill of material (I am using some screws and magnets) to this repository. However, the firmware is very clunky and almost unusable. Thankfully WaveShare Pi Zero has reset button, so I've been punching reset button whenever touchpad glitches out. But once I put everything in enclosure, I will lose access to the reset button unless I add another switch elsewhere. I will need to refine the firmware and see if I can make it better.. 
+
+## October 2025 update
+This is my 3D printed enclosure for this project. 
+
+![inside](images/08_inside.JPG)
+
+Here the breakout board and the microcontroller is directly fixed to the cutout. 
+
+![cover](images/09_cover_up.JPG)
+
+When assembled, it would look like this. I added some holes to insert magnets for the top cover. 
+
+![fully_assembled](images/10_assembled.JPG)
+
+Top cover can be printed in any color for further customization. 
+
+A lot more to work to do on the firmware for better driver support, but rudimentary point and click works. 
