@@ -694,3 +694,11 @@ When assembled, it would look like this. I added some holes to insert magnets fo
 Top cover can be printed in any color for further customization. 
 
 A lot more to work to do on the firmware for better driver support, but rudimentary point and click works. 
+
+
+# October 26 2025 
+Looks like Framework published the full HID descriptor and the HID Report definitions! 
+
+https://github.com/FrameworkComputer/Framework-Laptop-13/blob/main/Touchpad/Firmware.md 
+
+Glad to see the actual HID documentation is now available on their repository :) 
